@@ -11,17 +11,52 @@ class RestProxy
     private Client $_client;
     private Request $_request;
     private Response $_response;
-
-    private string $_body;
-    private array $_headers;
-
-    private $_map;
-
+    private array $_mounts = [];
+    private array $_headers = [];
+    private string $_body = '';
+    
     function __construct()
     {
         $this->_client = new CLient();
+    }
 
-        $this->_request = new Request($_SERVER['REQUEST_METHOD'], 'http://domain19.local/v1/home');
+    /**
+     * mount an api to a name
+     * @param $name_
+     * @param $url_
+     */
+    public function mount(string $route_, string $url_)
+    {
+        $this->_mounts[$route_] = $url_;
+    }
+
+    /**
+     * run the proxy
+     */
+    public function exec()
+    {
+        $_request_url = 
+            (isset($_SERVER['HTTPS']) ? 'https' : 'http') 
+                . '://'.$_SERVER['HTTP_HOST']
+                . $_SERVER['REQUEST_URI'] 
+                . (($_SERVER['QUERY_STRING'] ?? '') ? $_SERVER['QUERY_STRING'] : '');
+
+        $_request_route = explode('/', explode('://', $_request_url)[1]);
+
+        array_shift($_request_route);
+
+        $_mount_name = array_shift($_request_route);
+
+        $_request_route = implode('/', $_request_route);
+
+        $_target_url = $this->_mounts[$_mount_name];
+
+        if (substr($_target_url, -1) != '/') 
+            $_target_url .= '/';
+
+        $_target_url .= $_request_route;
+
+        $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
 
         $this->_response = $this->_client->send($this->_request);
 
@@ -29,71 +64,32 @@ class RestProxy
 
         $this->_body = $this->_response->getBody()->getContents();
     }
-
+  
     /**
-     * register an api
+     * get response headers
      */
-    /*
-    public function register(string $name_, string $url_)
-    {
-        $this->_map[$name_] = $url_;
-    }
-
-
-    public function run()
-    {
-        foreach ($this->_map as $name_ => $mapurl_)
-            return $this->dispatch($name_, $mapurl_);
-    }
-
-
-
-    private function dispatch(string $name_, string $mapurl_)
-    {
-
-
-
-        $_url = $this->_request->getpathinfo();
-
-        if (strpos($_url, $name_) == 1) {
-
-            $_url = $mapurl_ . str_replace("/{$name_}", '', $_url);
-
-            $_query = $this->_request->getquerystring();
-
-            switch ($this->_request->getmethod()) {
-
-                case 'get':
-                    $this->content = $this->_curl->doget($_url, $_query);
-                    break;
-
-                case 'post':
-                    $this->content = $this->_curl->dopost($_url, $_query);
-                    break;
-
-                case 'delete':
-                    $this->content = $this->_curl->dodelete($_url, $_query);
-                    break;
-
-                case 'put':
-                    $this->content = $this->_curl->doput($_url, $_query);
-                    break;
-            }
-
-            $this->_headers = $this->_curl->getheaders();
-        }
-    }
-    */
-
-
     public function getHeaders()
     {
         return $this->_headers;
     }
 
+    /**
+     * get response body
+     */
     public function getBody()
     {
         return $this->_body;
     }
-    
+
+    /**
+     * dump results from remote api with headers
+     */
+    public function dump()
+    {
+        foreach ($this->getHeaders() as $name_ => $value_) 
+            header($name_.': '.$value_[0]);
+
+        // output response body
+        echo $this->getBody();
+    }
 }
