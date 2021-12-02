@@ -17,7 +17,7 @@ class RestProxy
     
     function __construct()
     {
-        $this->_client = new CLient();
+        $this->_client = new Client();
     }
 
     /**
@@ -32,6 +32,7 @@ class RestProxy
 
     /**
      * run the proxy
+     * @return void
      */
     public function exec()
     {
@@ -67,22 +68,25 @@ class RestProxy
   
     /**
      * get response headers
+     * @return array
      */
-    public function getHeaders()
+    public function getHeaders(): array
     {
         return $this->_headers;
     }
 
     /**
      * get response body
+     * @return string
      */
-    public function getBody()
+    public function getBody(): string
     {
         return $this->_body;
     }
 
     /**
      * dump results from remote api with headers
+     * @return void
      */
     public function dump()
     {
