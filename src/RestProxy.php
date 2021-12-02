@@ -37,40 +37,33 @@ class RestProxy
      */
     public function exec()
     {
-        $_request_url = 
-            (isset($_SERVER['HTTPS']) ? 'https' : 'http') 
-                . '://'.$_SERVER['HTTP_HOST']
-                . $_SERVER['REQUEST_URI'] 
-                . (($_SERVER['QUERY_STRING'] ?? '') ? $_SERVER['QUERY_STRING'] : '');
-
         // remove script directory
-        $_request_route =  substr($_SERVER['REQUEST_URI'], strlen(dirname($_SERVER['PHP_SELF'])));
+        $_script_path = dirname($_SERVER['PHP_SELF']);
+        if (strlen($_script_path) > 1)
+            $_request_route = substr($_SERVER['REQUEST_URI'], strlen($_script_path));
+        else $_request_route = $_SERVER['REQUEST_URI'];
 
-        $_request_route_arr = explode('/', $_request_route);
-        
-        // shift away '/', then store proxy mount name
+        // shift away root, then store proxy mount name
+        $_request_route_array = explode('/', $_request_route);
         array_shift($_request_route_arr);
-        $_mount_name = array_shift($_request_route_arr);
+        $_mount_name = array_shift($_request_route_array);
 
         // build actual target api route
-        $_request_route = implode('/', $_request_route_arr);
+        $_request_route = '/'.implode('/', $_request_route_array);
 
         if (!isset($this->_mounts[$_mount_name]))
             throw new RestProxyException('Undefined mount: '.$_mount_name);
 
         $_target_url = $this->_mounts[$_mount_name];
 
-        if (substr($_target_url, -1) != '/') 
-            $_target_url .= '/';
+        if (substr($_target_url, -1) === '/') 
+            $_target_url = substr($_target_url, 0, -1); 
 
         $_target_url .= $_request_route;
 
         $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
-
         $this->_response = $this->_client->send($this->_request);
-
         $this->_headers = $this->_response->getHeaders();
-
         $this->_body = $this->_response->getBody()->getContents();
     }
   
