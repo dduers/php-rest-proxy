@@ -10,7 +10,7 @@ use Dduers\PhpRestProxy\RestProxyException;
 class RestProxy 
 {
     private Client $_client;
-    private Request $_request;
+    //private Request $_request;
     private Response $_response;
     private array $_mounts = [];
     private array $_headers = [];
@@ -61,9 +61,6 @@ class RestProxy
 
         $_target_url .= $_request_route;
 
-        //file_put_contents('test.txt', json_encode($_POST));
-        
-
         switch ($_SERVER['REQUEST_METHOD']) {
 
             case 'GET':
@@ -81,14 +78,13 @@ class RestProxy
             case 'POST':
                 $_params = [];
                 if (!isset($_POST) || !count($_POST)) {
-                    $_body = file_get_contents('php://input');
-                    parse_str($_body, $_params);
+                    $_params = json_decode(file_get_contents("php://input"), true);
                 } else {
                     $_params = $_POST;
                 }
 
                 $this->_response = $this->_client->post($_target_url, [
-                    'form_params' => $_POST
+                    'form_params' => $_params
                 ]);
                 break;
 
@@ -113,13 +109,12 @@ class RestProxy
                 break;
 
             case 'DELETE':
-                $this->_response = $this->_client->delete($_target_url, [
+                $this->_response = $this->_client->delete($_target_url/*, [
                     'query' => $_GET
-                ]);
+                ]*/);
                 break;
         }
 
-        //$this->_response = $this->_client->send($this->_request);
         $this->_headers = $this->_response->getHeaders();
         $this->_body = $this->_response->getBody()->getContents();
     }
@@ -146,12 +141,11 @@ class RestProxy
      * dump results from remote api with headers
      * @return void
      */
-    public function dump()
+    public function dump(): string
     {
         foreach ($this->getHeaders() as $name_ => $value_) 
             header($name_.': '.$value_[0]);
 
-        // output response body
-        echo $this->getBody();
+        return $this->getBody();
     }
 }
