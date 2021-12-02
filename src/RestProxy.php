@@ -29,7 +29,7 @@ class RestProxy
     /**
      * original request header of the origin
      */
-    private array $_origin_response_headers = [];
+    private array $_origin_request_headers = [];
     
     /**
      * constructor
@@ -39,7 +39,7 @@ class RestProxy
     function __construct()
     {
         foreach (getallheaders() as $header_ => $value_)
-            $this->_origin_response_headers[$header_] = $value_;
+            $this->_origin_request_headers[$header_] = $value_;
 
         $this->_client = new Client();
     }
@@ -87,22 +87,34 @@ class RestProxy
         switch ($_SERVER['REQUEST_METHOD']) {
 
             case 'GET':
-                $this->_response = $this->_client->get($_target_url);
+                $this->_response = $this->_client->get($_target_url, [
+                    'headers' => [
+                        'User-Agent' => $this->_origin_request_headers['User-Agent']
+                    ]
+                ]);
                 break;
 
             case 'HEAD':
-                $this->_response = $this->_client->head($_target_url);
+                $this->_response = $this->_client->get($_target_url, [
+                    'headers' => [
+                        'User-Agent' => $this->_origin_request_headers['User-Agent']
+                    ]
+                ]);
                 break;
 
             case 'OPTIONS':
-                $this->_response = $this->_client->options($_target_url);
+                $this->_response = $this->_client->get($_target_url, [
+                    'headers' => [
+                        'User-Agent' => $this->_origin_request_headers['User-Agent']
+                    ]
+                ]);
                 break;
 
             case 'POST':
 
-                file_put_contents('test.txt', "\n".$this->_origin_response_headers['Content-Type'], FILE_APPEND);
-                if (isset($this->_origin_response_headers['Content-Type'])) {
-                    switch ($this->_origin_response_headers['Content-Type']) {
+                file_put_contents('test.txt', "\n".$this->_origin_request_headers['Content-Type'], FILE_APPEND);
+                if (isset($this->_origin_request_headers['Content-Type'])) {
+                    switch ($this->_origin_request_headers['Content-Type']) {
 
                         case 'application/json':
                             $_params = json_decode(file_get_contents("php://input"), true);
@@ -117,7 +129,7 @@ class RestProxy
                             break;
 
                         case 'text/plain':
-                            throw new RestProxyException('unsupported encoding type: '.$_SERVER['REQUEST_METHOD'].'/'.$this->_origin_response_headers['Content-Type']);
+                            throw new RestProxyException('unsupported encoding type: '.$_SERVER['REQUEST_METHOD'].'/'.$this->_origin_request_headers['Content-Type']);
                             break;
                     }
                 }
@@ -126,7 +138,10 @@ class RestProxy
                     throw new RestProxyException('no parameters received: '.$_SERVER['REQUEST_METHOD']);
 
                 $this->_response = $this->_client->post($_target_url, [
-                    'form_params' => $_params
+                    'form_params' => $_params,
+                    'headers' => [
+                        'User-Agent' => $this->_origin_request_headers['User-Agent']
+                    ]
                 ]);
                 break;
 
@@ -136,7 +151,10 @@ class RestProxy
                 parse_str($_body, $_params);
 
                 $this->_response = $this->_client->put($_target_url, [
-                    'body' => $_params
+                    'body' => $_params,
+                    'headers' => [
+                        'User-Agent' => $this->_origin_request_headers['User-Agent']
+                    ]
                 ]);
                 break;
 
@@ -146,14 +164,19 @@ class RestProxy
                 parse_str($_body, $_params);
 
                 $this->_response = $this->_client->put($_target_url, [
-                    'body' => $_params
+                    'body' => $_params,
+                    'headers' => [
+                        'User-Agent' => $this->_origin_request_headers['User-Agent']
+                    ]
                 ]);
                 break;
 
             case 'DELETE':
-                $this->_response = $this->_client->delete($_target_url/*, [
-                    'query' => $_GET
-                ]*/);
+                $this->_response = $this->_client->delete($_target_url, [
+                    'headers' => [
+                        'User-Agent' => $this->_origin_request_headers['User-Agent']
+                    ]
+                ]);
                 break;
         }
 
@@ -198,6 +221,6 @@ class RestProxy
      */
     public function getRequestHeaders(): array
     {
-        return $this->_origin_response_headers;
+        return $this->_origin_request_headers;
     }
 }
