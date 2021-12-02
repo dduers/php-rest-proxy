@@ -61,6 +61,9 @@ class RestProxy
 
         $_target_url .= $_request_route;
 
+        file_put_contents('test.txt', json_encode($_POST));
+        
+
         switch ($_SERVER['REQUEST_METHOD']) {
 
             case 'GET':
