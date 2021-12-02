@@ -3,8 +3,6 @@
     "description": "proxy for rest apis",
     "type": "library",
     "require": {
-        "symfony/class-loader": "^3.4",
-        "symfony/http-foundation": "^5.4",
         "guzzlehttp/guzzle": "^7.4"
     },
     "license": "MIT",
