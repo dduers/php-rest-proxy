@@ -3,21 +3,44 @@ declare(strict_types=1);
 namespace Dduers\PhpRestProxy;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Dduers\PhpRestProxy\RestProxyException;
 
 class RestProxy 
 {
-    private Client $_client;
-    //private Request $_request;
-    private Response $_response;
+    /**
+     * proxy mouts
+     * [[name => url], ...]
+     */
     private array $_mounts = [];
-    private array $_headers = [];
-    private string $_body = '';
+
+    /**
+     * http client
+     */
+    private Client $_client;
+
+    /**
+     * target api response
+     */
+    private Response $_response;
+    private array $_response_headers = [];
+    private string $_response_body = '';
+
+    /**
+     * original request header of the origin
+     */
+    private array $_origin_response_headers = [];
     
+    /**
+     * constructor
+     * - parse origin request headers
+     * - initialize http client
+     */
     function __construct()
     {
+        foreach (getallheaders() as $header_ => $value_)
+            $this->_origin_response_headers[$header_] = $value_;
+
         $this->_client = new Client();
     }
 
@@ -52,7 +75,7 @@ class RestProxy
         $_request_route = '/'.implode('/', $_request_route_array);
 
         if (!isset($this->_mounts[$_mount_name]))
-            throw new RestProxyException('Undefined mount: '.$_mount_name);
+            throw new RestProxyException('undefined mount: '.$_mount_name);
 
         $_target_url = $this->_mounts[$_mount_name];
 
@@ -76,12 +99,31 @@ class RestProxy
                 break;
 
             case 'POST':
-                $_params = [];
-                if (!isset($_POST) || !count($_POST)) {
-                    $_params = json_decode(file_get_contents("php://input"), true);
-                } else {
-                    $_params = $_POST;
+
+                file_put_contents('test.txt', "\n".$this->_origin_response_headers['Content-Type'], FILE_APPEND);
+                if (isset($this->_origin_response_headers['Content-Type'])) {
+                    switch ($this->_origin_response_headers['Content-Type']) {
+
+                        case 'application/json':
+                            $_params = json_decode(file_get_contents("php://input"), true);
+                            break;
+
+                        case 'application/x-www-form-urlencoded':
+                            $_params = $_POST;
+                            break;
+
+                        case 'multipart/form-data':
+                            $_params = $_POST;
+                            break;
+
+                        case 'text/plain':
+                            throw new RestProxyException('unsupported encoding type: '.$_SERVER['REQUEST_METHOD'].'/'.$this->_origin_response_headers['Content-Type']);
+                            break;
+                    }
                 }
+
+                if (!isset($_params))
+                    throw new RestProxyException('no parameters received: '.$_SERVER['REQUEST_METHOD']);
 
                 $this->_response = $this->_client->post($_target_url, [
                     'form_params' => $_params
@@ -115,26 +157,26 @@ class RestProxy
                 break;
         }
 
-        $this->_headers = $this->_response->getHeaders();
-        $this->_body = $this->_response->getBody()->getContents();
+        $this->_response_headers = $this->_response->getHeaders();
+        $this->_response_body = $this->_response->getBody()->getContents();
     }
   
     /**
      * get response headers
      * @return array
      */
-    public function getHeaders(): array
+    public function getReponseHeaders(): array
     {
-        return $this->_headers;
+        return $this->_response_headers;
     }
 
     /**
      * get response body
      * @return string
      */
-    public function getBody(): string
+    public function getResponseBody(): string
     {
-        return $this->_body;
+        return $this->_response_body;
     }
 
     /**
@@ -143,9 +185,19 @@ class RestProxy
      */
     public function dump(): string
     {
-        foreach ($this->getHeaders() as $name_ => $value_) 
+        foreach ($this->getReponseHeaders() as $name_ => $value_) 
             header($name_.': '.$value_[0]);
 
-        return $this->getBody();
+        return $this->getResponseBody();
+    }
+
+
+    /**
+     * get request headers of the origin request
+     * @return array
+     */
+    public function getRequestHeaders(): array
+    {
+        return $this->_origin_response_headers;
     }
 }
