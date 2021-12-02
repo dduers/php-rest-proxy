@@ -4,6 +4,7 @@
 
 - Redirect API Request to target API
 - Output response body with response headers
+- Multiple API endpoints can be mounted with a name
 
 ## Installation
 
