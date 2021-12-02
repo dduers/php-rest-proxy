@@ -11,7 +11,8 @@
 
 ## Usage
 
-```
+```php
+<?php
 $_proxy = new \Dduers\PhpRestProxy\RestProxy();
 
 // set response headers
