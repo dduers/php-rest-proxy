@@ -61,8 +61,54 @@ class RestProxy
 
         $_target_url .= $_request_route;
 
-        $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
-        $this->_response = $this->_client->send($this->_request);
+        switch ($_SERVER['REQUEST_METHOD']) {
+
+            case 'GET':
+                $this->_response = $this->_client->get($_target_url);
+                break;
+
+            case 'HEAD':
+                $this->_response = $this->_client->head($_target_url);
+                break;
+
+            case 'OPTIONS':
+                $this->_response = $this->_client->options($_target_url);
+                break;
+
+            case 'POST':
+                $this->_response = $this->_client->post($_target_url, [
+                    'form_params' => $_POST
+                ]);
+                break;
+
+            case 'PUT':
+                $_params = [];
+                $_body = file_get_contents('php://input');
+                parse_str($_body, $_params);
+
+                $this->_response = $this->_client->put($_target_url, [
+                    'body' => $_params
+                ]);
+                break;
+
+            case 'PATCH':
+                $_params = [];
+                $_body = file_get_contents('php://input');
+                parse_str($_body, $_params);
+
+                $this->_response = $this->_client->put($_target_url, [
+                    'body' => $_params
+                ]);
+                break;
+
+            case 'DELETE':
+                $this->_response = $this->_client->delete($_target_url, [
+                    'query' => $_GET
+                ]);
+                break;
+        }
+
+        //$this->_response = $this->_client->send($this->_request);
         $this->_headers = $this->_response->getHeaders();
         $this->_body = $this->_response->getBody()->getContents();
     }
