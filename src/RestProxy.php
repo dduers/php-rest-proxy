@@ -61,7 +61,7 @@ class RestProxy
 
         $_target_url .= $_request_route;
 
-        file_put_contents('test.txt', json_encode($_POST));
+        //file_put_contents('test.txt', json_encode($_POST));
         
 
         switch ($_SERVER['REQUEST_METHOD']) {
@@ -79,6 +79,14 @@ class RestProxy
                 break;
 
             case 'POST':
+                $_params = [];
+                if (!isset($_POST) || !count($_POST)) {
+                    $_body = file_get_contents('php://input');
+                    parse_str($_body, $_params);
+                } else {
+                    $_params = $_POST;
+                }
+
                 $this->_response = $this->_client->post($_target_url, [
                     'form_params' => $_POST
                 ]);
