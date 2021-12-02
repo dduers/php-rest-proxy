@@ -5,6 +5,7 @@ namespace Dduers\PhpRestProxy;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Dduers\PhpRestProxy\RestProxyException;
 
 class RestProxy 
 {
@@ -42,13 +43,20 @@ class RestProxy
                 . $_SERVER['REQUEST_URI'] 
                 . (($_SERVER['QUERY_STRING'] ?? '') ? $_SERVER['QUERY_STRING'] : '');
 
-        $_request_route = explode('/', explode('://', $_request_url)[1]);
+        // remove script directory
+        $_request_route =  substr($_SERVER['REQUEST_URI'], strlen(dirname($_SERVER['PHP_SELF'])));
 
-        array_shift($_request_route);
+        $_request_route_arr = explode('/', $_request_route);
+        
+        // shift away '/', then store proxy mount name
+        array_shift($_request_route_arr);
+        $_mount_name = array_shift($_request_route_arr);
 
-        $_mount_name = array_shift($_request_route);
+        // build actual target api route
+        $_request_route = implode('/', $_request_route_arr);
 
-        $_request_route = implode('/', $_request_route);
+        if (!isset($this->_mounts[$_mount_name]))
+            throw new RestProxyException('Undefined mount: '.$_mount_name);
 
         $_target_url = $this->_mounts[$_mount_name];
 
