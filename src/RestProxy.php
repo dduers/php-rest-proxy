@@ -45,7 +45,7 @@ class RestProxy
 
         // shift away root, then store proxy mount name
         $_request_route_array = explode('/', $_request_route);
-        array_shift($_request_route_arr);
+        array_shift($_request_route_array);
         $_mount_name = array_shift($_request_route_array);
 
         // build actual target api route
