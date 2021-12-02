@@ -1,0 +1,24 @@
+{
+    "name": "dduers/php-rest-proxy",
+    "description": "proxy for rest apis",
+    "type": "library",
+    "require": {
+        "symfony/class-loader": "^3.4",
+        "symfony/http-foundation": "^5.4",
+        "guzzlehttp/guzzle": "^7.4"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Dduers\\PhpRestProxy\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Daniel Duersteler",
+            "email": "daniel.duersteler@gmail.com",
+            "homepage": "https://www.xsite.ch",
+            "role": "Developer"
+        }
+    ]
+}
