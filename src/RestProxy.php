@@ -20,7 +20,9 @@ class RestProxy
      */
     private Client $_client;
 
-    private CookieJar $_cookies;
+    private array $_cookies = [];
+
+    private CookieJar $_cookies_jar;
 
     /**
      * target api response
@@ -41,16 +43,13 @@ class RestProxy
      */
     function __construct(array $client_options_ = [])
     {
+        $this->_client = new Client($client_options_);
+
         foreach (getallheaders() as $header_ => $value_)
             $this->_origin_request_headers[$header_] = $value_;
 
-        $this->_client = new Client($client_options_);
-
-        $_cookies = [];
         foreach ($_COOKIE as $key_ => $value_)
-            $_cookies[$key_] = $value_;
-
-        $this->_cookies = CookieJar::fromArray($_cookies, '.domain16.local');
+            $this->_cookies[$key_] = $value_;
     }
 
     /**
@@ -93,6 +92,11 @@ class RestProxy
 
         $_target_url .= $_request_route;
 
+        $this->_cookies_jar = CookieJar::fromArray(
+            $this->_cookies, 
+            $this->getDomainFromUrl($_target_url)
+        );
+
         switch ($_SERVER['REQUEST_METHOD']) {
 
             case 'GET':
@@ -100,7 +104,7 @@ class RestProxy
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
                     ],
-                    'cookies' => $this->_cookies
+                    'cookies' => $this->_cookies_jar
                 ]);
                 break;
 
@@ -109,7 +113,7 @@ class RestProxy
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
                     ],
-                    'cookies' => $this->_cookies
+                    'cookies' => $this->_cookies_jar
                 ]);
                 break;
 
@@ -118,7 +122,7 @@ class RestProxy
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
                     ],
-                    'cookies' => $this->_cookies
+                    'cookies' => $this->_cookies_jar
                 ]);
                 break;
 
@@ -134,7 +138,7 @@ class RestProxy
                                 'headers' => [
                                     'User-Agent' => $this->_origin_request_headers['User-Agent']
                                 ],
-                                'cookies' => $this->_cookies
+                                'cookies' => $this->_cookies_jar
                             ];
                             break;
 
@@ -145,7 +149,7 @@ class RestProxy
                                 'headers' => [
                                     'User-Agent' => $this->_origin_request_headers['User-Agent']
                                 ],
-                                'cookies' => $this->_cookies
+                                'cookies' => $this->_cookies_jar
                             ];
                             break;
 
@@ -156,7 +160,7 @@ class RestProxy
                                 'headers' => [
                                     'User-Agent' => $this->_origin_request_headers['User-Agent']
                                 ],
-                                'cookies' => $this->_cookies
+                                'cookies' => $this->_cookies_jar
                             ];
                             break;
 
@@ -182,7 +186,7 @@ class RestProxy
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
                     ],
-                    'cookies' => $this->_cookies
+                    'cookies' => $this->_cookies_jar
                 ]);
                 break;
 
@@ -196,7 +200,7 @@ class RestProxy
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
                     ],
-                    'cookies' => $this->_cookies
+                    'cookies' => $this->_cookies_jar
                 ]);
                 break;
 
@@ -205,7 +209,7 @@ class RestProxy
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
                     ],
-                    'cookies' => $this->_cookies
+                    'cookies' => $this->_cookies_jar
                 ]);
                 break;
         }
@@ -259,5 +263,15 @@ class RestProxy
     public function getRequestHeaders(): array
     {
         return $this->_origin_request_headers;
+    }
+
+    /**
+     * parse domain name out of an url
+     * @param string $url_
+     * @return string
+     */
+    private function getDomainFromUrl(string $url_): string
+    {
+        return parse_url($url_)['host'] ?? '';
     }
 }

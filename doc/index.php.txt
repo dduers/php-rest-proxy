@@ -1,5 +1,0 @@
-<?php
-$_proxy = new \Dduers\PhpRestProxy\RestProxy();
-$_proxy->mount('myapi', 'http://domain19.local/v1');
-$_proxy->exec();
-echo $_proxy->dump();

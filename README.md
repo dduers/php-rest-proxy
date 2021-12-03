@@ -42,6 +42,26 @@ $_proxy->exec();
 echo $_proxy->dump();
 ```
 
+Or, since v1.0.2, pass client options to the constructor:
+
+
+```php
+require_once $_SERVER['DOCUMENT_ROOT'].'/../vendor/autoload.php';
+
+$_proxy = new \Dduers\PhpRestProxy\RestProxy([
+
+    // for dev, don't verify ssl certs
+    'verify' => false,
+
+    // use HTTP/2
+    'version' => 2
+]);
+
+$_proxy->mount('srocki', 'https://domain19.local/v1');
+$_proxy->exec();
+$_proxy->dump();
+```
+
 ## Cross Site Cookies
 
 - The target API can issue cookies for the domain, where the Rest Proxy is running
