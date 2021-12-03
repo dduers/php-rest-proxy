@@ -118,14 +118,32 @@ class RestProxy
 
                         case 'application/json':
                             $_params = json_decode(file_get_contents("php://input"), true);
+                            $_options = [
+                                'json' => $_params,
+                                'headers' => [
+                                    'User-Agent' => $this->_origin_request_headers['User-Agent']
+                                ]
+                            ];
                             break;
 
                         case 'application/x-www-form-urlencoded':
                             $_params = $_POST;
+                            $_options = [
+                                'form_params' => $_params,
+                                'headers' => [
+                                    'User-Agent' => $this->_origin_request_headers['User-Agent']
+                                ]
+                            ];
                             break;
 
                         case 'multipart/form-data':
                             $_params = $_POST;
+                            $_options = [
+                                'form_params' => $_params,
+                                'headers' => [
+                                    'User-Agent' => $this->_origin_request_headers['User-Agent']
+                                ]
+                            ];
                             break;
 
                         case 'text/plain':
@@ -137,12 +155,7 @@ class RestProxy
                 if (!isset($_params))
                     throw new RestProxyException('no parameters received: '.$_SERVER['REQUEST_METHOD']);
 
-                $this->_response = $this->_client->post($_target_url, [
-                    'form_params' => $_params,
-                    'headers' => [
-                        'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ]
-                ]);
+                $this->_response = $this->_client->post($_target_url, $_options);
                 break;
 
             case 'PUT':
