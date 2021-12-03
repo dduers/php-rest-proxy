@@ -36,12 +36,12 @@ class RestProxy
      * - parse origin request headers
      * - initialize http client
      */
-    function __construct()
+    function __construct(array $client_options_ = [])
     {
         foreach (getallheaders() as $header_ => $value_)
             $this->_origin_request_headers[$header_] = $value_;
 
-        $this->_client = new Client();
+        $this->_client = new Client($client_options_);
     }
 
     /**
