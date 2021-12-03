@@ -5,6 +5,7 @@ namespace Dduers\PhpRestProxy;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 use Dduers\PhpRestProxy\RestProxyException;
+use GuzzleHttp\Cookie\CookieJar;
 
 class RestProxy 
 {
@@ -18,6 +19,8 @@ class RestProxy
      * http client
      */
     private Client $_client;
+
+    private CookieJar $_cookies;
 
     /**
      * target api response
@@ -42,6 +45,12 @@ class RestProxy
             $this->_origin_request_headers[$header_] = $value_;
 
         $this->_client = new Client($client_options_);
+
+        $_cookies = [];
+        foreach ($_COOKIE as $key_ => $value_)
+            $_cookies[$key_] = $value_;
+
+        $this->_cookies = CookieJar::fromArray($_cookies, '.domain16.local');
     }
 
     /**
@@ -90,7 +99,8 @@ class RestProxy
                 $this->_response = $this->_client->get($_target_url, [
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ]
+                    ],
+                    'cookies' => $this->_cookies
                 ]);
                 break;
 
@@ -98,7 +108,8 @@ class RestProxy
                 $this->_response = $this->_client->get($_target_url, [
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ]
+                    ],
+                    'cookies' => $this->_cookies
                 ]);
                 break;
 
@@ -106,7 +117,8 @@ class RestProxy
                 $this->_response = $this->_client->get($_target_url, [
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ]
+                    ],
+                    'cookies' => $this->_cookies
                 ]);
                 break;
 
@@ -121,7 +133,8 @@ class RestProxy
                                 'json' => $_params,
                                 'headers' => [
                                     'User-Agent' => $this->_origin_request_headers['User-Agent']
-                                ]
+                                ],
+                                'cookies' => $this->_cookies
                             ];
                             break;
 
@@ -131,7 +144,8 @@ class RestProxy
                                 'form_params' => $_params,
                                 'headers' => [
                                     'User-Agent' => $this->_origin_request_headers['User-Agent']
-                                ]
+                                ],
+                                'cookies' => $this->_cookies
                             ];
                             break;
 
@@ -141,7 +155,8 @@ class RestProxy
                                 'form_params' => $_params,
                                 'headers' => [
                                     'User-Agent' => $this->_origin_request_headers['User-Agent']
-                                ]
+                                ],
+                                'cookies' => $this->_cookies
                             ];
                             break;
 
@@ -166,7 +181,8 @@ class RestProxy
                     'body' => $_params,
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ]
+                    ],
+                    'cookies' => $this->_cookies
                 ]);
                 break;
 
@@ -179,7 +195,8 @@ class RestProxy
                     'body' => $_params,
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ]
+                    ],
+                    'cookies' => $this->_cookies
                 ]);
                 break;
 
@@ -187,7 +204,8 @@ class RestProxy
                 $this->_response = $this->_client->delete($_target_url, [
                     'headers' => [
                         'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ]
+                    ],
+                    'cookies' => $this->_cookies
                 ]);
                 break;
         }
@@ -221,8 +239,6 @@ class RestProxy
      */
     public function dump()
     {
-        file_put_contents('test.txt', print_r($this->getReponseHeaders(), true)."\n\n\n", FILE_APPEND);
-
         $_headers = $this->getReponseHeaders();
 
         array_walk($_headers, function($value_, $header_) {
