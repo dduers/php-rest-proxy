@@ -112,7 +112,6 @@ class RestProxy
 
             case 'POST':
 
-                file_put_contents('test.txt', "\n".$this->_origin_request_headers['Content-Type'], FILE_APPEND);
                 if (isset($this->_origin_request_headers['Content-Type'])) {
                     switch ($this->_origin_request_headers['Content-Type']) {
 
@@ -193,6 +192,7 @@ class RestProxy
                 break;
         }
 
+        
         $this->_response_headers = $this->_response->getHeaders();
         $this->_response_body = $this->_response->getBody()->getContents();
     }
@@ -219,14 +219,22 @@ class RestProxy
      * dump results from remote api with headers
      * @return void
      */
-    public function dump(): string
+    public function dump()
     {
-        foreach ($this->getReponseHeaders() as $name_ => $value_) 
-            header($name_.': '.$value_[0]);
+        file_put_contents('test.txt', print_r($this->getReponseHeaders(), true)."\n\n\n", FILE_APPEND);
 
-        return $this->getResponseBody();
+        $_headers = $this->getReponseHeaders();
+
+        array_walk($_headers, function($value_, $header_) {
+            //if (count($value_) > 1)
+                foreach ($value_ as $_v)
+                    header($header_.': '.$_v, false); 
+            //else header($header_.': '.$value_[0]); 
+        });
+
+        echo $this->getResponseBody();
+        exit();
     }
-
 
     /**
      * get request headers of the origin request
