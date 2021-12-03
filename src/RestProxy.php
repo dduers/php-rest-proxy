@@ -97,31 +97,36 @@ class RestProxy
             $this->getDomainFromUrl($_target_url)
         );
 
+        $_forward_headers = array_filter([
+            'User-Agent' => $this->_origin_request_headers['User-Agent'] ?? NULL,
+            'Referer' => $this->_origin_request_headers['Referer'] ?? NULL,
+            'Accept' => $this->_origin_request_headers['Accept'] ?? NULL,
+            'Accept-Charset' => $this->_origin_request_headers['Accept-Charset'] ?? NULL,
+            'Accept-Encoding' => $this->_origin_request_headers['Accept-Encoding'] ?? NULL,
+            'Accept-Language' => $this->_origin_request_headers['Accept-Language'] ?? NULL,
+            //'Connection' => $this->_origin_request_headers['Connection'] ?? NULL,
+            //'Host' => $this->_origin_request_headers['Host'] ?? NULL,
+        ]);
+
         switch ($_SERVER['REQUEST_METHOD']) {
 
             case 'GET':
                 $this->_response = $this->_client->get($_target_url, [
-                    'headers' => [
-                        'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ],
+                    'headers' => $_forward_headers,
                     'cookies' => $this->_cookies_jar
                 ]);
                 break;
 
             case 'HEAD':
                 $this->_response = $this->_client->get($_target_url, [
-                    'headers' => [
-                        'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ],
+                    'headers' => $_forward_headers,
                     'cookies' => $this->_cookies_jar
                 ]);
                 break;
 
             case 'OPTIONS':
                 $this->_response = $this->_client->get($_target_url, [
-                    'headers' => [
-                        'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ],
+                    'headers' => $_forward_headers,
                     'cookies' => $this->_cookies_jar
                 ]);
                 break;
@@ -135,9 +140,16 @@ class RestProxy
                             $_params = json_decode(file_get_contents("php://input"), true);
                             $_options = [
                                 'json' => $_params,
-                                'headers' => [
-                                    'User-Agent' => $this->_origin_request_headers['User-Agent']
-                                ],
+                                'headers' => array_filter([
+                                    'User-Agent' => $this->_origin_request_headers['User-Agent'] ?? NULL,
+                                    'Referer' => $this->_origin_request_headers['Referer'] ?? NULL,
+                                    'Accept' => $this->_origin_request_headers['Accept'] ?? NULL,
+                                    'Accept-Charset' => $this->_origin_request_headers['Accept-Charset'] ?? NULL,
+                                    'Accept-Encoding' => $this->_origin_request_headers['Accept-Encoding'] ?? NULL,
+                                    'Accept-Language' => $this->_origin_request_headers['Accept-Language'] ?? NULL,
+                                    //'Connection' => $this->_origin_request_headers['Connection'] ?? NULL,
+                                    //'Host' => $this->_origin_request_headers['Host'] ?? NULL,
+                                ]),
                                 'cookies' => $this->_cookies_jar
                             ];
                             break;
@@ -146,9 +158,7 @@ class RestProxy
                             $_params = $_POST;
                             $_options = [
                                 'form_params' => $_params,
-                                'headers' => [
-                                    'User-Agent' => $this->_origin_request_headers['User-Agent']
-                                ],
+                                'headers' => $_forward_headers,
                                 'cookies' => $this->_cookies_jar
                             ];
                             break;
@@ -157,9 +167,7 @@ class RestProxy
                             $_params = $_POST;
                             $_options = [
                                 'form_params' => $_params,
-                                'headers' => [
-                                    'User-Agent' => $this->_origin_request_headers['User-Agent']
-                                ],
+                                'headers' => $_forward_headers,
                                 'cookies' => $this->_cookies_jar
                             ];
                             break;
@@ -183,9 +191,7 @@ class RestProxy
 
                 $this->_response = $this->_client->put($_target_url, [
                     'body' => $_params,
-                    'headers' => [
-                        'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ],
+                    'headers' => $_forward_headers,
                     'cookies' => $this->_cookies_jar
                 ]);
                 break;
@@ -197,18 +203,14 @@ class RestProxy
 
                 $this->_response = $this->_client->put($_target_url, [
                     'body' => $_params,
-                    'headers' => [
-                        'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ],
+                    'headers' => $_forward_headers,
                     'cookies' => $this->_cookies_jar
                 ]);
                 break;
 
             case 'DELETE':
                 $this->_response = $this->_client->delete($_target_url, [
-                    'headers' => [
-                        'User-Agent' => $this->_origin_request_headers['User-Agent']
-                    ],
+                    'headers' => $_forward_headers,
                     'cookies' => $this->_cookies_jar
                 ]);
                 break;
