@@ -177,10 +177,12 @@ class RestProxy
                             break;
                     }
                 }
-
+                
+                /*
                 if (!isset($_params))
                     throw new RestProxyException('no parameters received: '.$_SERVER['REQUEST_METHOD']);
-
+                */
+                
                 $this->_response = $this->_client->post($_target_url, $_options);
                 break;
 
