@@ -6,10 +6,7 @@ namespace Dduers\PhpRestProxy;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Message;
 use Dduers\PhpRestProxy\RestProxyException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
@@ -37,7 +34,6 @@ class RestProxy
     private Response $_response;
     private array $_response_headers = [];
     private string $_response_body = '';
-    private Request $_request;
 
     /**
      * original request header of the origin
@@ -122,13 +118,13 @@ class RestProxy
             'http_errors' => true
         ];
 
-        switch ($_SERVER['REQUEST_METHOD']) {
+        $_method = $_SERVER['REQUEST_METHOD'];
+
+        switch ($_method) {
 
             case 'GET':
             case 'HEAD':
             case 'OPTIONS':
-                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
-                //$this->_response = $this->_client->get($_target_url, $_options);
                 break;
 
             case 'POST':
@@ -158,12 +154,10 @@ class RestProxy
                             break;
 
                         case 'text/plain':
-                            throw new RestProxyException('unsupported encoding type: ' . $_SERVER['REQUEST_METHOD'] . '/' . $this->_origin_request_headers['Content-Type']);
+                            throw new RestProxyException('unsupported encoding type: ' . $_method . '/' . $this->_origin_request_headers['Content-Type']);
                             break;
                     }
                 }
-                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
-                //$this->_response = $this->_client->post($_target_url, $_options);
                 break;
 
             case 'PUT':
@@ -195,12 +189,10 @@ class RestProxy
                             break;
 
                         case 'text/plain':
-                            throw new RestProxyException('unsupported encoding type: ' . $_SERVER['REQUEST_METHOD'] . '/' . $this->_origin_request_headers['Content-Type']);
+                            throw new RestProxyException('unsupported encoding type: ' . $_method . '/' . $this->_origin_request_headers['Content-Type']);
                             break;
                     }
                 }
-                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
-                //$this->_response = $this->_client->put($_target_url, $_options);
                 break;
 
             case 'PATCH':
@@ -211,24 +203,14 @@ class RestProxy
                 $_options = array_merge($_options, [
                     'json' => $_params,
                 ]);
-                /*
-                $this->_response = $this->_client->patch($_target_url, array_merge($_options, [
-                    'json' => $_params,
-                ]));*/
-                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
                 break;
 
             case 'DELETE':
-                /*$this->_response = $this->_client->delete($_target_url, [
-                    'headers' => $_forward_headers,
-                    'cookies' => $this->_cookies_jar
-                ]);*/
-                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
                 break;
         }
 
         try {
-            $this->_response = $this->_client->send($this->_request, $_options);
+            $this->_response = $this->_client->{strtolower($_method)}($_target_url, $_options);
             $this->_response_headers = $this->_response->getHeaders();
             $this->_response_body = $this->_response->getBody()->getContents();
         } catch (ClientException $_e) {
