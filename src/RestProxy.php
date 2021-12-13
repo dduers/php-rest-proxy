@@ -234,7 +234,7 @@ class RestProxy
         } catch (ClientException $_e) {
             //echo Message::toString($_e->getRequest());
             //echo Message::toString($_e->getResponse());
-            http_response_code($this->_response->getStatusCode());
+            http_response_code($_e->getResponse()->getStatusCode());
         } catch (ServerException $_e) {
             http_response_code(500);
         }
