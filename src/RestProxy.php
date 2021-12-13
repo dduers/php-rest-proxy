@@ -1,13 +1,20 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Dduers\PhpRestProxy;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Response;
-use Dduers\PhpRestProxy\RestProxyException;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\TransferException;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Message;
+use Dduers\PhpRestProxy\RestProxyException;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
 
-class RestProxy 
+class RestProxy
 {
     /**
      * proxy mouts
@@ -30,12 +37,13 @@ class RestProxy
     private Response $_response;
     private array $_response_headers = [];
     private string $_response_body = '';
+    private Request $_request;
 
     /**
      * original request header of the origin
      */
     private array $_origin_request_headers = [];
-    
+
     /**
      * constructor
      * - parse origin request headers
@@ -80,20 +88,20 @@ class RestProxy
         $_mount_name = array_shift($_request_route_array);
 
         // build actual target api route
-        $_request_route = '/'.implode('/', $_request_route_array);
+        $_request_route = '/' . implode('/', $_request_route_array);
 
         if (!isset($this->_mounts[$_mount_name]))
-            throw new RestProxyException('undefined mount: '.$_mount_name);
+            throw new RestProxyException('undefined mount: ' . $_mount_name);
 
         $_target_url = $this->_mounts[$_mount_name];
 
-        if (substr($_target_url, -1) === '/') 
-            $_target_url = substr($_target_url, 0, -1); 
+        if (substr($_target_url, -1) === '/')
+            $_target_url = substr($_target_url, 0, -1);
 
         $_target_url .= $_request_route;
 
         $this->_cookies_jar = CookieJar::fromArray(
-            $this->_cookies, 
+            $this->_cookies,
             $this->getDomainFromUrl($_target_url)
         );
 
@@ -108,27 +116,19 @@ class RestProxy
             //'Host' => $this->_origin_request_headers['Host'] ?? NULL,
         ]);
 
+        $_options = [
+            'headers' => $_forward_headers,
+            'cookies' => $this->_cookies_jar,
+            'http_errors' => true
+        ];
+
         switch ($_SERVER['REQUEST_METHOD']) {
 
             case 'GET':
-                $this->_response = $this->_client->get($_target_url, [
-                    'headers' => $_forward_headers,
-                    'cookies' => $this->_cookies_jar
-                ]);
-                break;
-
             case 'HEAD':
-                $this->_response = $this->_client->get($_target_url, [
-                    'headers' => $_forward_headers,
-                    'cookies' => $this->_cookies_jar
-                ]);
-                break;
-
             case 'OPTIONS':
-                $this->_response = $this->_client->get($_target_url, [
-                    'headers' => $_forward_headers,
-                    'cookies' => $this->_cookies_jar
-                ]);
+                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
+                //$this->_response = $this->_client->get($_target_url, $_options);
                 break;
 
             case 'POST':
@@ -138,38 +138,32 @@ class RestProxy
 
                         case 'application/json':
                             $_params = json_decode(file_get_contents("php://input"), true);
-                            $_options = [
+                            $_options = array_merge($_options, [
                                 'json' => $_params,
-                                'headers' => $_forward_headers,
-                                'cookies' => $this->_cookies_jar
-                            ];
+                            ]);
                             break;
 
                         case 'application/x-www-form-urlencoded':
                             $_params = $_POST;
-                            $_options = [
+                            $_options = array_merge($_options, [
                                 'form_params' => $_params,
-                                'headers' => $_forward_headers,
-                                'cookies' => $this->_cookies_jar
-                            ];
+                            ]);
                             break;
 
                         case 'multipart/form-data':
                             $_params = $_POST;
-                            $_options = [
+                            $_options = array_merge($_options, [
                                 'form_params' => $_params,
-                                'headers' => $_forward_headers,
-                                'cookies' => $this->_cookies_jar
-                            ];
+                            ]);
                             break;
 
                         case 'text/plain':
-                            throw new RestProxyException('unsupported encoding type: '.$_SERVER['REQUEST_METHOD'].'/'.$this->_origin_request_headers['Content-Type']);
+                            throw new RestProxyException('unsupported encoding type: ' . $_SERVER['REQUEST_METHOD'] . '/' . $this->_origin_request_headers['Content-Type']);
                             break;
                     }
                 }
-                
-                $this->_response = $this->_client->post($_target_url, $_options);
+                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
+                //$this->_response = $this->_client->post($_target_url, $_options);
                 break;
 
             case 'PUT':
@@ -179,40 +173,34 @@ class RestProxy
 
                         case 'application/json':
                             $_params = json_decode(file_get_contents("php://input"), true);
-                            $_options = [
+                            $_options = array_merge($_options, [
                                 'json' => $_params,
-                                'headers' => $_forward_headers,
-                                'cookies' => $this->_cookies_jar
-                            ];
+                            ]);
                             break;
 
                         case 'application/x-www-form-urlencoded':
                             $_body = file_get_contents("php://input");
                             parse_str($_body, $_params);
-                            $_options = [
+                            $_options = array_merge($_options, [
                                 'form_params' => $_params,
-                                'headers' => $_forward_headers,
-                                'cookies' => $this->_cookies_jar
-                            ];
+                            ]);
                             break;
 
                         case 'multipart/form-data':
                             $_body = file_get_contents("php://input");
                             parse_str($_body, $_params);
-                            $_options = [
+                            $_options = array_merge($_options, [
                                 'form_params' => $_params,
-                                'headers' => $_forward_headers,
-                                'cookies' => $this->_cookies_jar
-                            ];
+                            ]);
                             break;
 
                         case 'text/plain':
-                            throw new RestProxyException('unsupported encoding type: '.$_SERVER['REQUEST_METHOD'].'/'.$this->_origin_request_headers['Content-Type']);
+                            throw new RestProxyException('unsupported encoding type: ' . $_SERVER['REQUEST_METHOD'] . '/' . $this->_origin_request_headers['Content-Type']);
                             break;
                     }
                 }
-                
-                $this->_response = $this->_client->put($_target_url, $_options);
+                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
+                //$this->_response = $this->_client->put($_target_url, $_options);
                 break;
 
             case 'PATCH':
@@ -220,26 +208,38 @@ class RestProxy
                 $_body = file_get_contents('php://input');
                 parse_str($_body, $_params);
 
-                $this->_response = $this->_client->patch($_target_url, [
-                    'body' => $_params,
-                    'headers' => $_forward_headers,
-                    'cookies' => $this->_cookies_jar
+                $_options = array_merge($_options, [
+                    'json' => $_params,
                 ]);
+                /*
+                $this->_response = $this->_client->patch($_target_url, array_merge($_options, [
+                    'json' => $_params,
+                ]));*/
+                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
                 break;
 
             case 'DELETE':
-                $this->_response = $this->_client->delete($_target_url, [
+                /*$this->_response = $this->_client->delete($_target_url, [
                     'headers' => $_forward_headers,
                     'cookies' => $this->_cookies_jar
-                ]);
+                ]);*/
+                $this->_request = new Request($_SERVER['REQUEST_METHOD'], $_target_url);
                 break;
         }
 
-        
-        $this->_response_headers = $this->_response->getHeaders();
-        $this->_response_body = $this->_response->getBody()->getContents();
+        try {
+            $this->_response = $this->_client->send($this->_request, $_options);
+            $this->_response_headers = $this->_response->getHeaders();
+            $this->_response_body = $this->_response->getBody()->getContents();
+        } catch (ClientException $_e) {
+            //echo Message::toString($_e->getRequest());
+            //echo Message::toString($_e->getResponse());
+            http_response_code($this->_response->getStatusCode());
+        } catch (ServerException $_e) {
+            http_response_code(500);
+        }
     }
-  
+
     /**
      * get response headers
      * @return array
@@ -266,10 +266,10 @@ class RestProxy
     {
         $_headers = $this->getReponseHeaders();
 
-        array_walk($_headers, function($value_, $header_) {
+        array_walk($_headers, function ($value_, $header_) {
             //if (count($value_) > 1)
-                foreach ($value_ as $_v)
-                    header($header_.': '.$_v, false); 
+            foreach ($value_ as $_v)
+                header($header_ . ': ' . $_v, false);
             //else header($header_.': '.$value_[0]); 
         });
 
