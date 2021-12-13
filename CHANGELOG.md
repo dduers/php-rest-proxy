@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+- better handling of forwareded put requests
+
 ## 1.0.2
 
 - added cookie forwarding
