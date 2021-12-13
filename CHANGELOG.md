@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.4
+
+- better handling of forwareded patch requests
+- response http errors now are forwarded to the origin request
+
 ## 1.0.3
 
 - better handling of forwareded put requests

@@ -23,10 +23,12 @@ class RestProxy
      * http client
      */
     private Client $_client;
-
-    private array $_cookies = [];
-
+    
+    /**
+     * cookies
+     */
     private CookieJar $_cookies_jar;
+    private array $_cookies = [];
 
     /**
      * target api response
@@ -60,8 +62,9 @@ class RestProxy
      * mount an api to a name
      * @param $name_
      * @param $url_
+     * @return void
      */
-    public function mount(string $route_, string $url_)
+    public function mount(string $route_, string $url_): void
     {
         $this->_mounts[$route_] = $url_;
     }
@@ -70,7 +73,7 @@ class RestProxy
      * run the proxy
      * @return void
      */
-    public function exec()
+    public function exec(): void
     {
         // remove script directory
         $_script_path = dirname($_SERVER['PHP_SELF']);
@@ -133,7 +136,7 @@ class RestProxy
                     switch ($this->_origin_request_headers['Content-Type']) {
 
                         case 'application/json':
-                            $_params = json_decode(file_get_contents("php://input"), true);
+                            $_params = json_decode(file_get_contents('php://input'), true);
                             $_options = array_merge($_options, [
                                 'json' => $_params,
                             ]);
@@ -161,19 +164,20 @@ class RestProxy
                 break;
 
             case 'PUT':
+            case 'PATCH':
 
                 if (isset($this->_origin_request_headers['Content-Type'])) {
                     switch ($this->_origin_request_headers['Content-Type']) {
 
                         case 'application/json':
-                            $_params = json_decode(file_get_contents("php://input"), true);
+                            $_params = json_decode(file_get_contents('php://input'), true);
                             $_options = array_merge($_options, [
                                 'json' => $_params,
                             ]);
                             break;
 
                         case 'application/x-www-form-urlencoded':
-                            $_body = file_get_contents("php://input");
+                            $_body = file_get_contents('php://input');
                             parse_str($_body, $_params);
                             $_options = array_merge($_options, [
                                 'form_params' => $_params,
@@ -181,7 +185,7 @@ class RestProxy
                             break;
 
                         case 'multipart/form-data':
-                            $_body = file_get_contents("php://input");
+                            $_body = file_get_contents('php://input');
                             parse_str($_body, $_params);
                             $_options = array_merge($_options, [
                                 'form_params' => $_params,
@@ -193,16 +197,6 @@ class RestProxy
                             break;
                     }
                 }
-                break;
-
-            case 'PATCH':
-                $_params = [];
-                $_body = file_get_contents('php://input');
-                parse_str($_body, $_params);
-
-                $_options = array_merge($_options, [
-                    'json' => $_params,
-                ]);
                 break;
 
             case 'DELETE':
@@ -220,6 +214,15 @@ class RestProxy
         } catch (ServerException $_e) {
             http_response_code(500);
         }
+    }
+
+    /**
+     * get request headers of the origin request
+     * @return array
+     */
+    public function getRequestHeaders(): array
+    {
+        return $this->_origin_request_headers;
     }
 
     /**
@@ -244,7 +247,7 @@ class RestProxy
      * dump results from remote api with headers
      * @return void
      */
-    public function dump()
+    public function dump(): void
     {
         $_headers = $this->getReponseHeaders();
 
@@ -257,15 +260,6 @@ class RestProxy
 
         echo $this->getResponseBody();
         exit();
-    }
-
-    /**
-     * get request headers of the origin request
-     * @return array
-     */
-    public function getRequestHeaders(): array
-    {
-        return $this->_origin_request_headers;
     }
 
     /**
