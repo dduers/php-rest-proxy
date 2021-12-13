@@ -212,7 +212,7 @@ class RestProxy
                     }
                 }
                 
-                $this->_response = $this->_client->post($_target_url, $_options);
+                $this->_response = $this->_client->put($_target_url, $_options);
                 break;
 
             case 'PATCH':
@@ -220,7 +220,7 @@ class RestProxy
                 $_body = file_get_contents('php://input');
                 parse_str($_body, $_params);
 
-                $this->_response = $this->_client->put($_target_url, [
+                $this->_response = $this->_client->patch($_target_url, [
                     'body' => $_params,
                     'headers' => $_forward_headers,
                     'cookies' => $this->_cookies_jar
