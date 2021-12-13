@@ -140,16 +140,7 @@ class RestProxy
                             $_params = json_decode(file_get_contents("php://input"), true);
                             $_options = [
                                 'json' => $_params,
-                                'headers' => array_filter([
-                                    'User-Agent' => $this->_origin_request_headers['User-Agent'] ?? NULL,
-                                    'Referer' => $this->_origin_request_headers['Referer'] ?? NULL,
-                                    'Accept' => $this->_origin_request_headers['Accept'] ?? NULL,
-                                    'Accept-Charset' => $this->_origin_request_headers['Accept-Charset'] ?? NULL,
-                                    'Accept-Encoding' => $this->_origin_request_headers['Accept-Encoding'] ?? NULL,
-                                    'Accept-Language' => $this->_origin_request_headers['Accept-Language'] ?? NULL,
-                                    //'Connection' => $this->_origin_request_headers['Connection'] ?? NULL,
-                                    //'Host' => $this->_origin_request_headers['Host'] ?? NULL,
-                                ]),
+                                'headers' => $_forward_headers,
                                 'cookies' => $this->_cookies_jar
                             ];
                             break;
@@ -178,24 +169,50 @@ class RestProxy
                     }
                 }
                 
-                /*
-                if (!isset($_params))
-                    throw new RestProxyException('no parameters received: '.$_SERVER['REQUEST_METHOD']);
-                */
-                
                 $this->_response = $this->_client->post($_target_url, $_options);
                 break;
 
             case 'PUT':
-                $_params = [];
-                $_body = file_get_contents('php://input');
-                parse_str($_body, $_params);
 
-                $this->_response = $this->_client->put($_target_url, [
-                    'body' => $_params,
-                    'headers' => $_forward_headers,
-                    'cookies' => $this->_cookies_jar
-                ]);
+                if (isset($this->_origin_request_headers['Content-Type'])) {
+                    switch ($this->_origin_request_headers['Content-Type']) {
+
+                        case 'application/json':
+                            $_params = json_decode(file_get_contents("php://input"), true);
+                            $_options = [
+                                'json' => $_params,
+                                'headers' => $_forward_headers,
+                                'cookies' => $this->_cookies_jar
+                            ];
+                            break;
+
+                        case 'application/x-www-form-urlencoded':
+                            $_body = file_get_contents("php://input");
+                            parse_str($_body, $_params);
+                            $_options = [
+                                'form_params' => $_params,
+                                'headers' => $_forward_headers,
+                                'cookies' => $this->_cookies_jar
+                            ];
+                            break;
+
+                        case 'multipart/form-data':
+                            $_body = file_get_contents("php://input");
+                            parse_str($_body, $_params);
+                            $_options = [
+                                'form_params' => $_params,
+                                'headers' => $_forward_headers,
+                                'cookies' => $this->_cookies_jar
+                            ];
+                            break;
+
+                        case 'text/plain':
+                            throw new RestProxyException('unsupported encoding type: '.$_SERVER['REQUEST_METHOD'].'/'.$this->_origin_request_headers['Content-Type']);
+                            break;
+                    }
+                }
+                
+                $this->_response = $this->_client->post($_target_url, $_options);
                 break;
 
             case 'PATCH':
