@@ -23,7 +23,7 @@ class RestProxy
      * http client
      */
     private Client $_client;
-    
+
     /**
      * cookies
      */

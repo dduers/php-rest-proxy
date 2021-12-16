@@ -10,6 +10,6 @@ $_proxy = new \Dduers\PhpRestProxy\RestProxy([
     'version' => 2
 ]);
 
-$_proxy->mount('srocki', 'http://domain19.local/v1');
+$_proxy->mount('myapi', 'https://domain19.local/v1');
 $_proxy->exec();
 $_proxy->dump();
