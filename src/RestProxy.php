@@ -213,8 +213,8 @@ class RestProxy
 
             $_decoded_body = json_decode($this->_response_body, true);
 
-            if (isset($_decoded_body['_identifier'])) {
-                $this->setCookie('_identifier', $_decoded_body['_identifier']);
+            if (isset($_decoded_body['data']['_identifier'])) {
+                $this->setCookie('_identifier', $_decoded_body['data']['_identifier']);
             }
 
         } catch (ClientException $_e) {
