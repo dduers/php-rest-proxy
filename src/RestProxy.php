@@ -27,7 +27,7 @@ class RestProxy
     /**
      * cookies
      */
-    private CookieJar $_cookies_jar;
+    //private CookieJar $_cookies_jar;
     private array $_cookies = [];
 
     /**
@@ -111,13 +111,14 @@ class RestProxy
             'Accept-Charset' => $this->_origin_request_headers['Accept-Charset'] ?? NULL,
             'Accept-Encoding' => $this->_origin_request_headers['Accept-Encoding'] ?? NULL,
             'Accept-Language' => $this->_origin_request_headers['Accept-Language'] ?? NULL,
+            'Authorization' => ($_t = ($this->_cookies['_identifier'] ?? '')) ? 'Bearer '.$_t : NULL,
             //'Connection' => $this->_origin_request_headers['Connection'] ?? NULL,
             //'Host' => $this->_origin_request_headers['Host'] ?? NULL,
         ]);
 
         $_options = [
             'headers' => $_forward_headers,
-            'cookies' => $this->_cookies_jar,
+            //'cookies' => $this->_cookies_jar,
             'http_errors' => true
         ];
 
@@ -207,6 +208,13 @@ class RestProxy
             $this->_response = $this->_client->{strtolower($_method)}($_target_url, $_options);
             $this->_response_headers = $this->_response->getHeaders();
             $this->_response_body = $this->_response->getBody()->getContents();
+
+            $_decoded_body = json_decode($this->_response_body, true);
+
+            if (isset($_decoded_body['_identifier'])) {
+                $this->setCookie('_identifier', $_decoded_body['_identifier']);
+            }
+
         } catch (ClientException $_e) {
             //echo Message::toString($_e->getRequest());
             //echo Message::toString($_e->getResponse());
@@ -270,5 +278,29 @@ class RestProxy
     private function getDomainFromUrl(string $url_): string
     {
         return parse_url($url_)['host'] ?? '';
+    }
+
+    /**
+     * issue a cookie
+     * @param string $name_
+     * @param string $content_
+     * @return array the settings which where used to create the cookie
+     */
+    private function setCookie(string $name_, string $content_, bool $stayloggedin_ = false): array
+    {
+        $_options = array_filter([
+            'expires' => $stayloggedin_ === true
+                ? (string)(time() + 86400)
+                : 31500000,
+            //'domain' => (string)$this->_f3->get('CONF.cookie.options.domain') ?: NULL,
+            'httponly' => true, //(string)$this->_f3->get('CONF.cookie.options.httponly') ?: NULL,
+            'secure' => false, //(string)$this->_f3->get('CONF.cookie.options.secure') ?: NULL,
+            'path' => '/', //(string)$this->_f3->get('CONF.cookie.options.path') ?: NULL,
+            'samesite' => 'Strict' //(string)$this->_f3->get('CONF.cookie.options.samesite') ?: NULL,
+        ]);
+
+        setcookie($name_, $content_, $_options);
+
+        return $_options;
     }
 }
