@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Dduers\PhpRestProxy;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Cookie\CookieJar;
+//use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Psr7\Response;
 use Dduers\PhpRestProxy\RestProxyException;
 use GuzzleHttp\Exception\ClientException;
@@ -99,10 +99,12 @@ class RestProxy
 
         $_target_url .= $_request_route;
 
+        /*
         $this->_cookies_jar = CookieJar::fromArray(
             $this->_cookies,
             $this->getDomainFromUrl($_target_url)
         );
+        */
 
         $_forward_headers = array_filter([
             'User-Agent' => $this->_origin_request_headers['User-Agent'] ?? NULL,
