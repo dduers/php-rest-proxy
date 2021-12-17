@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Dduers\PhpRestProxy;
 
 use GuzzleHttp\Client;
-//use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Psr7\Response;
 use Dduers\PhpRestProxy\RestProxyException;
 use GuzzleHttp\Exception\ClientException;
@@ -99,12 +99,10 @@ class RestProxy
 
         $_target_url .= $_request_route;
 
-        /*
         $this->_cookies_jar = CookieJar::fromArray(
             $this->_cookies,
             $this->getDomainFromUrl($_target_url)
         );
-        */
 
         $_forward_headers = array_filter([
             'User-Agent' => $this->_origin_request_headers['User-Agent'] ?? NULL,
@@ -113,14 +111,14 @@ class RestProxy
             'Accept-Charset' => $this->_origin_request_headers['Accept-Charset'] ?? NULL,
             'Accept-Encoding' => $this->_origin_request_headers['Accept-Encoding'] ?? NULL,
             'Accept-Language' => $this->_origin_request_headers['Accept-Language'] ?? NULL,
-            'Authorization' => ($_t = ($this->_cookies['_identifier'] ?? '')) ? 'Bearer '.$_t : NULL,
+            'Authorization' => ($_t = ($this->_cookies['_identifier'] ?? '')) ? 'Bearer ' . $_t : NULL,
             //'Connection' => $this->_origin_request_headers['Connection'] ?? NULL,
             //'Host' => $this->_origin_request_headers['Host'] ?? NULL,
         ]);
 
         $_options = [
             'headers' => $_forward_headers,
-            //'cookies' => $this->_cookies_jar,
+            'cookies' => $this->_cookies_jar,
             'http_errors' => true
         ];
 
@@ -212,11 +210,8 @@ class RestProxy
             $this->_response_body = $this->_response->getBody()->getContents();
 
             $_decoded_body = json_decode($this->_response_body, true);
-
-            if (isset($_decoded_body['data']['_identifier'])) {
-                $this->setCookie('_identifier', $_decoded_body['data']['_identifier']);
-            }
-
+            if (isset($_decoded_body['data']['_identifier']))
+                $this->setCookie('_identifier', $_decoded_body['data']['_identifier'], $_decoded_body['data']['_stayloggedin']);
         } catch (ClientException $_e) {
             //echo Message::toString($_e->getRequest());
             //echo Message::toString($_e->getResponse());
@@ -292,11 +287,11 @@ class RestProxy
     {
         $_options = array_filter([
             'expires' => $stayloggedin_ === true
-                ? (string)(time() + 86400)
+                ? NULL
                 : (string)(time() + 31500000),
             //'domain' => (string)$this->_f3->get('CONF.cookie.options.domain') ?: NULL,
             'httponly' => true, //(string)$this->_f3->get('CONF.cookie.options.httponly') ?: NULL,
-            'secure' => false, //(string)$this->_f3->get('CONF.cookie.options.secure') ?: NULL,
+            'secure' => true, //(string)$this->_f3->get('CONF.cookie.options.secure') ?: NULL,
             'path' => '/', //(string)$this->_f3->get('CONF.cookie.options.path') ?: NULL,
             'samesite' => 'Strict' //(string)$this->_f3->get('CONF.cookie.options.samesite') ?: NULL,
         ]);
