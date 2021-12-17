@@ -211,7 +211,7 @@ class RestProxy
 
             $_decoded_body = json_decode($this->_response_body, true);
             if (isset($_decoded_body['data']['_identifier']))
-                $this->setCookie('_identifier', $_decoded_body['data']['_identifier'], $_decoded_body['data']['_stayloggedin']);
+                $this->setCookie('_identifier', $_decoded_body['data']['_identifier'], $_decoded_body['data']['_stayloggedin'] ?? false);
         } catch (ClientException $_e) {
             //echo Message::toString($_e->getRequest());
             //echo Message::toString($_e->getResponse());
