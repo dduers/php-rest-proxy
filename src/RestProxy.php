@@ -293,7 +293,7 @@ class RestProxy
         $_options = array_filter([
             'expires' => $stayloggedin_ === true
                 ? (string)(time() + 86400)
-                : 31500000,
+                : (string)(time() + 31500000),
             //'domain' => (string)$this->_f3->get('CONF.cookie.options.domain') ?: NULL,
             'httponly' => true, //(string)$this->_f3->get('CONF.cookie.options.httponly') ?: NULL,
             'secure' => false, //(string)$this->_f3->get('CONF.cookie.options.secure') ?: NULL,
