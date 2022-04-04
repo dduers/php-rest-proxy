@@ -7,6 +7,7 @@ namespace Dduers\PhpRestProxy;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Utils;
 use Dduers\PhpRestProxy\RestProxyException;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
@@ -132,9 +133,9 @@ class RestProxy
                 break;
 
             case 'POST':
-
                 if (isset($this->_origin_request_headers['Content-Type'])) {
-                    switch ($this->_origin_request_headers['Content-Type']) {
+                    $_content_type = explode(';', $this->_origin_request_headers['Content-Type'])[0];
+                    switch ($_content_type) {
 
                         case 'application/json':
                             $_params = json_decode(file_get_contents('php://input'), true);
@@ -151,9 +152,22 @@ class RestProxy
                             break;
 
                         case 'multipart/form-data':
-                            $_params = $_POST;
+                            $_params = [];
+                            foreach ($_FILES as $_key => $_value) {
+                                $_params[] = [
+                                    'name' => $_key,
+                                    'contents' => Utils::tryFopen($_value['tmp_name'], 'r'),
+                                    //'filename' => $_value['name'],
+                                ];
+                            }
+                            foreach ($_POST as $_key => $_value) {
+                                $_params[] = [
+                                    'name' => $_key,
+                                    'contents' => $_value
+                                ];
+                            }
                             $_options = array_merge($_options, [
-                                'form_params' => $_params,
+                                'multipart' => $_params,
                             ]);
                             break;
 
